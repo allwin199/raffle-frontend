@@ -9,7 +9,7 @@ const WalletConnected = () => {
     return (
         <div className="px-20 py-4">
             {!isConnected ? (
-                <div>Connect to a wallet to Enter the Raffle.</div>
+                <div>Connect your wallet to take part in the Raffle.</div>
             ) : (
                 <LotteryEntrance />
             )}
