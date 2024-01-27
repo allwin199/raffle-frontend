@@ -1,9 +1,11 @@
-import Connect from "@/components/Connect";
+import Header from "@/components/Header";
+import WalletConnected from "@/components/WalletConnected";
 
 const page = () => {
     return (
-        <div className="bf-[#000000]">
-            <Connect />
+        <div>
+            <Header />
+            <WalletConnected />
         </div>
     );
 };
