@@ -11,10 +11,10 @@ The Raffle project leverages the Foundry smart contract development framework, s
 [Raffle Smart Contract](https://sepolia.etherscan.io/address/0xa4ef0128e0bd906c1d3d3af704861af1641d4e74#code)  
 [Github](https://github.com/allwin199/raffle-foundry)
 
----
-
 ## Workflow
 
 ![Enter Raffle](./raffle.png)
+
+---
 
 ## Thank You :)
