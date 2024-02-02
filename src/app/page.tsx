@@ -3,10 +3,10 @@ import WalletConnected from "@/components/WalletConnected";
 
 const page = () => {
     return (
-        <div>
+        <>
             <Header />
             <WalletConnected />
-        </div>
+        </>
     );
 };
 

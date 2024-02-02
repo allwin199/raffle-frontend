@@ -1,14 +1,14 @@
 "use client";
 
 import LotteryEntrance from "./LotteryEntrance";
-import { useAccount } from "wagmi";
+import { useAddress } from "@thirdweb-dev/react";
 
 const WalletConnected = () => {
-    const { isConnected } = useAccount();
+    const address = useAddress();
 
     return (
         <div className="px-20 py-4">
-            {!isConnected ? (
+            {!address ? (
                 <div>Connect your wallet to take part in the Raffle.</div>
             ) : (
                 <LotteryEntrance />

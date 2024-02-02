@@ -1,120 +1,90 @@
 "use client";
 
+import { useState } from "react";
+import { useContract, useContractRead } from "@thirdweb-dev/react";
 import { ethers } from "ethers";
-import {
-    useWriteContract,
-    useReadContracts,
-    useWaitForTransactionReceipt,
-} from "wagmi";
-import { abi } from "../../const/abi";
-import { BigNumberish } from "ethers";
-import { useEffect } from "react";
 
 const LotteryEntrance = () => {
-    const {
-        data: hash,
-        isPending: isTransactionPending,
-        writeContract,
-    } = useWriteContract();
-    const contractAddress = "0xA4ef0128E0BD906c1d3D3AF704861Af1641d4E74";
+    const [enteringRaffle, setEnteringRaffle] = useState(false);
 
-    let entranceFee;
-    let numPlayers;
-    let recentWinner;
-
-    const { data, error, isPending, isFetching, refetch } = useReadContracts({
-        contracts: [
-            {
-                abi,
-                address: contractAddress,
-                functionName: "getEntranceFee",
-            },
-            {
-                abi,
-                address: contractAddress,
-                functionName: "getNumPlayers",
-            },
-            {
-                abi,
-                address: contractAddress,
-                functionName: "getRecentWinner",
-            },
-        ],
-    });
-
-    const { isLoading: isConfirming, isSuccess: isConfirmed } =
-        useWaitForTransactionReceipt({
-            hash,
-        });
-
-    useEffect(() => {
-        if (!isConfirming && isConfirmed) {
-            refetch()
-                .then(() => {})
-                .catch((error) => {
-                    console.error(error);
-                });
-        }
-    }, [isConfirming, isConfirmed, refetch]);
-
-    if (isPending) return <div> Raffle Details Loading...</div>;
-
-    if (!isPending && isFetching) return <div> Raffle Details Loading...</div>;
-
-    if (error) return <div>Something went wrong!</div>;
-
-    const [entranceFeeResult, numPlayersResult, recentWinnerResult] =
-        data || [];
-
-    function convertBigIntToString(value: BigNumberish) {
-        return ethers.formatUnits(value).toString();
-    }
-
-    entranceFee = entranceFeeResult.result;
-    numPlayers = numPlayersResult.result;
-    recentWinner = recentWinnerResult.result?.toString();
-
-    const entranceFeeInEther = convertBigIntToString(
-        entranceFee as BigNumberish
+    const { contract } = useContract(
+        "0xA4ef0128E0BD906c1d3D3AF704861Af1641d4E74"
     );
 
-    const numberOfPlayers = numPlayers?.toString();
+    const {
+        data: recentWinner,
+        isLoading: recentWinnerLoading,
+        isSuccess: recentWinnerSuccess,
+    } = useContractRead(contract, "getRecentWinner");
 
-    const enterRaffle = () => {
-        writeContract({
-            address: contractAddress,
-            abi,
-            functionName: "enterRaffle",
-            value: ethers.parseEther(entranceFeeInEther),
-        });
+    const {
+        data: entranceFee,
+        isLoading: entranceFeeLoading,
+        isSuccess: entranceFeeSuccess,
+    } = useContractRead(contract, "getEntranceFee");
+
+    const {
+        data: numPlayers,
+        isLoading: numPlayersLoading,
+        isSuccess: numPlayersSuccess,
+        refetch: refetchPlayers,
+    } = useContractRead(contract, "getNumPlayers");
+
+    const enterRaffle = async () => {
+        setEnteringRaffle(true);
+        try {
+            const data = await contract?.call("enterRaffle", [], {
+                value: entranceFee,
+            });
+            console.info("contract call successs", data);
+            refetchPlayers();
+        } catch (err) {
+            console.error("contract call failure", err);
+        } finally {
+            setEnteringRaffle(false);
+        }
     };
-
-    if (isConfirming) return <div>Waiting for confirmation...</div>;
 
     return (
         <div>
             <button
                 onClick={() => enterRaffle()}
-                disabled={isTransactionPending}
+                disabled={enteringRaffle}
                 className="border border-blue-500 hover:bg-blue-500 hover:text-white px-4 py-2"
             >
-                {isTransactionPending ? "Entering Raffle..." : "Enter Raffle"}
+                {!enteringRaffle ? "Enter Raffle" : "Entering..."}
             </button>
+
             <div className="grid grid-cols-3 gap-4 mt-4">
                 <div className="bg-[#222222] rounded p-6">
                     Entrance Fee
-                    <p className="text-sm mt-4">{entranceFeeInEther} ETH</p>
+                    {!entranceFeeLoading && entranceFeeSuccess ? (
+                        <p className="text-sm mt-4">
+                            {ethers.utils.formatEther(entranceFee.toString())}{" "}
+                            ETH
+                        </p>
+                    ) : (
+                        <p className="mt-4">Loading...</p>
+                    )}
                 </div>
                 <div className="bg-[#222222] rounded p-6">
                     Number of Players
-                    <p className="text-sm mt-4">{numberOfPlayers}</p>
+                    {!numPlayersLoading && numPlayersSuccess ? (
+                        <p className="text-sm mt-4">{Number(numPlayers)} </p>
+                    ) : (
+                        <p className="mt-4">Loading...</p>
+                    )}
                 </div>
                 <div className="bg-[#222222] rounded p-6">
                     Recent Winner
-                    <p className="text-sm mt-4">
-                        {recentWinner?.slice(0, 4)}...
-                        {recentWinner?.slice(-6)}
-                    </p>
+                    {recentWinnerSuccess && !recentWinnerLoading ? (
+                        <p className="text-sm mt-4">
+                            {recentWinner?.slice(0, 4)}...
+                            {recentWinner?.slice(-6)}
+                        </p>
+                    ) : (
+                        <p className="mt-4">Loading...</p>
+                    )}
                 </div>
             </div>
         </div>
